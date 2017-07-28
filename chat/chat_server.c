@@ -139,8 +139,15 @@ static void remove_client(int fd_client) {
 	int pos = clients_pos[fd_client];
 	char* connected = "!Client has been disconnected!\n"; 	
 	do_log(connected, strlen(connected), pos);
+
+	// critical session of connected clients
+	pthread_mutex_lock(&mutex);
+
 	clients[pos] = clients[connected_clients];
 	connected_clients--;
+
+	pthread_mutex_unlock(&mutex);
+
 	if (epoll_ctl(fd_epoll, EPOLL_CTL_DEL, fd_client, NULL) == -1) {
 		perror("epoll_ctl del");
 	}	
@@ -240,12 +247,14 @@ static void* accept_new_connections(void* arg) {
 			client->nick = malloc(strlen("client-") + 3);
 			sprintf(client->nick, "client-%d", fd);			
 			client->fd = fd;
+			
+			pthread_mutex_lock(&mutex);
 			clients[connected_clients] = client;			
 			clients_pos[fd] = connected_clients;
 						
 			do_log(connected, strlen(connected), connected_clients);			
 			connected_clients++;
-			
+			pthread_mutex_unlock(&mutex);
 			
 		}	
 	}

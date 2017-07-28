@@ -1,0 +1,20 @@
+
+[client-5] connected client
+[client-5] !Client has been disconnected!
+[client-5] connected client
+[client-7] connected client
+[client-7] oi
+[client-7] bom dia
+[client-7] teste
+[client-5] bom dia
+[client-5] teste
+[client-5] !Client has been disconnected!
+[client-7] !Client has been disconnected!
+[client-8] connected client
+[client-8] teste
+[client-5] connected client
+[client-5] oi
+[client-5] teste
+[client-5] exit
+[client-5] !Client has been disconnected!
+[client-8] !Client has been disconnected!
