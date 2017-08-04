@@ -33,14 +33,14 @@ static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 struct epoll_event event;
 struct epoll_event events_list[MAX_EVENTS]; 
 
-static void* send_messages_clients(void* arg);
-static void* accept_new_connections(void* arg);
+static void* send_messages_clients();
+static void* accept_new_connections();
 static void spawn_logger(int fd_pipe[2]);
 static void remove_client(int client);
 static void do_log(char* msg, int buflen, int client_pos);
 
 
-int main(int argc, char* argv[]) {
+int main() {
 	
 	void* ret_socket_accept;
 	void* ret_send_messages;
@@ -100,6 +100,7 @@ static void spawn_logger(int fd_pipe[2]) {
 			perror("execve");
 			break;
 		}
+		__attribute__ ((fallthrough));	
 	default: // close read fd in the parent
 		close(fd_pipe[0]);
 		break;	
@@ -142,10 +143,18 @@ static void remove_client(int fd_client) {
 
 	// critical session of connected clients
 	pthread_mutex_lock(&mutex);
-
-	clients[pos] = clients[connected_clients];
+	
+	// get the last connected client
+	struct Client* client = clients[connected_clients];
+	
+	// and place into the disconnected client position to reuse memory;
+	clients[pos] = client;
+	
+	// update clients position about new position
+	clients_pos[client->fd] = pos;
+	
 	connected_clients--;
-
+	
 	pthread_mutex_unlock(&mutex);
 
 	if (epoll_ctl(fd_epoll, EPOLL_CTL_DEL, fd_client, NULL) == -1) {
@@ -153,7 +162,7 @@ static void remove_client(int fd_client) {
 	}	
 	close(fd_client);
 }
-static void* send_messages_clients(void* arg) {
+static void* send_messages_clients() {
 	ssize_t numRead;
 	char buf[MAX_BUF];
 	int ready_fd;
@@ -186,9 +195,9 @@ static void* send_messages_clients(void* arg) {
 	pthread_exit(NULL);
 }
 
-static void* accept_new_connections(void* arg) {
+static void* accept_new_connections() {
 	
-	int fd, fd_socket, flags;
+	int fd, fd_socket;
 
 	int backlog = 10; // max pending connections at the same time
 
